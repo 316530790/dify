@@ -182,3 +182,6 @@ from .workspace import (
     tool_providers,
     workspace,
 )
+
+# Import tenant keys controller
+from . import tenant_keys
