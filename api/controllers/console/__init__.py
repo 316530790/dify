@@ -167,6 +167,8 @@ api.add_resource(
 )
 
 # Import tag controllers
+# Import tenant keys controller
+from . import tenant_keys
 from .tag import tags
 
 # Import workspace controllers
@@ -182,6 +184,3 @@ from .workspace import (
     tool_providers,
     workspace,
 )
-
-# Import tenant keys controller
-from . import tenant_keys
