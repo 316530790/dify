@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import request
 from flask_restx import Resource, fields
 from sqlalchemy.orm import Session
 
