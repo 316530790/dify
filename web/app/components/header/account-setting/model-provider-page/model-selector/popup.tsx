@@ -17,6 +17,7 @@ import { XCircle } from '@/app/components/base/icons/src/vender/solid/general'
 import { useModalContext } from '@/context/modal-context'
 import { supportFunctionCall } from '@/utils/tool-call'
 import { tooltipManager } from '@/app/components/base/tooltip/TooltipManager'
+import { useAccessType } from '@/hooks/use-access-type'
 
 type PopupProps = {
   defaultModel?: DefaultModel
@@ -36,6 +37,7 @@ const Popup: FC<PopupProps> = ({
   const language = useLanguage()
   const [searchText, setSearchText] = useState('')
   const { setShowAccountSettingModal } = useModalContext()
+  const { isTokenUrlAccess } = useAccessType()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Close any open tooltips when the user scrolls to prevent them from appearing
@@ -127,13 +129,16 @@ const Popup: FC<PopupProps> = ({
           )
         }
       </div>
-      <div className='sticky bottom-0 flex cursor-pointer items-center rounded-b-lg border-t border-divider-subtle bg-components-panel-bg px-4 py-2 text-text-accent-light-mode-only' onClick={() => {
-        onHide()
-        setShowAccountSettingModal({ payload: 'provider' })
-      }}>
-        <span className='system-xs-medium'>{t('common.model.settingsLink')}</span>
-        <RiArrowRightUpLine className='ml-0.5 h-3 w-3' />
-      </div>
+      {/* 如果是通过token访问，隐藏模型设置链接 */}
+      {!isTokenUrlAccess && (
+        <div className='sticky bottom-0 flex cursor-pointer items-center rounded-b-lg border-t border-divider-subtle bg-components-panel-bg px-4 py-2 text-text-accent-light-mode-only' onClick={() => {
+          onHide()
+          setShowAccountSettingModal({ payload: 'provider' })
+        }}>
+          <span className='system-xs-medium'>{t('common.model.settingsLink')}</span>
+          <RiArrowRightUpLine className='ml-0.5 h-3 w-3' />
+        </div>
+      )}
     </div>
   )
 }

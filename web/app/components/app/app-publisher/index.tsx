@@ -47,6 +47,7 @@ import { AccessMode } from '@/models/access-control'
 import { fetchAppDetail } from '@/service/apps'
 import { useGlobalPublicStore } from '@/context/global-public-context'
 import { useFormatTimeFromNow } from '@/hooks/use-format-time-from-now'
+import { useAccessType } from '@/hooks/use-access-type'
 
 export type AppPublisherProps = {
   disabled?: boolean
@@ -96,6 +97,7 @@ const AppPublisher = ({
   const isChatApp = ['chat', 'agent-chat', 'completion'].includes(appDetail?.mode || '')
   const { data: userCanAccessApp, isLoading: isGettingUserCanAccessApp, refetch } = useGetUserCanAccessApp({ appId: appDetail?.id, enabled: false })
   const { data: appAccessSubjects, isLoading: isGettingAppWhiteListSubjects } = useAppWhiteListSubjects(appDetail?.id, open && systemFeatures.webapp_auth.enabled && appDetail?.access_mode === AccessMode.SPECIFIC_GROUPS_MEMBERS)
+  const { isTokenUrlAccess } = useAccessType()
 
   useEffect(() => {
     if (systemFeatures.webapp_auth.enabled && open && appDetail)
@@ -308,79 +310,82 @@ const AppPublisher = ({
                   </div>
                   {!isAppAccessSet && <p className='system-xs-regular mt-1 text-text-warning'>{t('app.publishApp.notSetDesc')}</p>}
                 </div>}
-                <div className='flex flex-col gap-y-1 border-t-[0.5px] border-t-divider-regular p-4 pt-3'>
-                  <Tooltip triggerClassName='flex' disabled={!systemFeatures.webapp_auth.enabled || appDetail?.access_mode === AccessMode.EXTERNAL_MEMBERS || userCanAccessApp?.result} popupContent={t('app.noAccessPermission')} asChild={false}>
-                    <SuggestedAction
-                      className='flex-1'
-                      disabled={!publishedAt || (systemFeatures.webapp_auth.enabled && appDetail?.access_mode !== AccessMode.EXTERNAL_MEMBERS && !userCanAccessApp?.result)}
-                      link={appURL}
-                      icon={<RiPlayCircleLine className='h-4 w-4' />}
-                    >
-                      {t('workflow.common.runApp')}
-                    </SuggestedAction>
-                  </Tooltip>
-                  {appDetail?.mode === 'workflow' || appDetail?.mode === 'completion'
-                    ? (
-                      <Tooltip triggerClassName='flex' disabled={!systemFeatures.webapp_auth.enabled || appDetail.access_mode === AccessMode.EXTERNAL_MEMBERS || userCanAccessApp?.result} popupContent={t('app.noAccessPermission')} asChild={false}>
-                        <SuggestedAction
-                          className='flex-1'
-                          disabled={!publishedAt || (systemFeatures.webapp_auth.enabled && appDetail.access_mode !== AccessMode.EXTERNAL_MEMBERS && !userCanAccessApp?.result)}
-                          link={`${appURL}${appURL.includes('?') ? '&' : '?'}mode=batch`}
-                          icon={<RiPlayList2Line className='h-4 w-4' />}
-                        >
-                          {t('workflow.common.batchRunApp')}
-                        </SuggestedAction>
-                      </Tooltip>
-                    )
-                    : (
+                {/* 如果是通过token访问，隐藏功能菜单 */}
+                {!isTokenUrlAccess && (
+                  <div className='flex flex-col gap-y-1 border-t-[0.5px] border-t-divider-regular p-4 pt-3'>
+                    <Tooltip triggerClassName='flex' disabled={!systemFeatures.webapp_auth.enabled || appDetail?.access_mode === AccessMode.EXTERNAL_MEMBERS || userCanAccessApp?.result} popupContent={t('app.noAccessPermission')} asChild={false}>
                       <SuggestedAction
-                        onClick={() => {
-                          setEmbeddingModalOpen(true)
-                          handleTrigger()
-                        }}
-                        disabled={!publishedAt}
-                        icon={<CodeBrowser className='h-4 w-4' />}
+                        className='flex-1'
+                        disabled={!publishedAt || (systemFeatures.webapp_auth.enabled && appDetail?.access_mode !== AccessMode.EXTERNAL_MEMBERS && !userCanAccessApp?.result)}
+                        link={appURL}
+                        icon={<RiPlayCircleLine className='h-4 w-4' />}
                       >
-                        {t('workflow.common.embedIntoSite')}
+                        {t('workflow.common.runApp')}
                       </SuggestedAction>
-                    )}
-                  <Tooltip triggerClassName='flex' disabled={!systemFeatures.webapp_auth.enabled || userCanAccessApp?.result} popupContent={t('app.noAccessPermission')} asChild={false}>
+                    </Tooltip>
+                    {appDetail?.mode === 'workflow' || appDetail?.mode === 'completion'
+                      ? (
+                        <Tooltip triggerClassName='flex' disabled={!systemFeatures.webapp_auth.enabled || appDetail.access_mode === AccessMode.EXTERNAL_MEMBERS || userCanAccessApp?.result} popupContent={t('app.noAccessPermission')} asChild={false}>
+                          <SuggestedAction
+                            className='flex-1'
+                            disabled={!publishedAt || (systemFeatures.webapp_auth.enabled && appDetail.access_mode !== AccessMode.EXTERNAL_MEMBERS && !userCanAccessApp?.result)}
+                            link={`${appURL}${appURL.includes('?') ? '&' : '?'}mode=batch`}
+                            icon={<RiPlayList2Line className='h-4 w-4' />}
+                          >
+                            {t('workflow.common.batchRunApp')}
+                          </SuggestedAction>
+                        </Tooltip>
+                      )
+                      : (
+                        <SuggestedAction
+                          onClick={() => {
+                            setEmbeddingModalOpen(true)
+                            handleTrigger()
+                          }}
+                          disabled={!publishedAt}
+                          icon={<CodeBrowser className='h-4 w-4' />}
+                        >
+                          {t('workflow.common.embedIntoSite')}
+                        </SuggestedAction>
+                      )}
+                    <Tooltip triggerClassName='flex' disabled={!systemFeatures.webapp_auth.enabled || userCanAccessApp?.result} popupContent={t('app.noAccessPermission')} asChild={false}>
+                      <SuggestedAction
+                        className='flex-1'
+                        onClick={() => {
+                          publishedAt && handleOpenInExplore()
+                        }}
+                        disabled={!publishedAt || (systemFeatures.webapp_auth.enabled && !userCanAccessApp?.result)}
+                        icon={<RiPlanetLine className='h-4 w-4' />}
+                      >
+                        {t('workflow.common.openInExplore')}
+                      </SuggestedAction>
+                    </Tooltip>
                     <SuggestedAction
-                      className='flex-1'
-                      onClick={() => {
-                        publishedAt && handleOpenInExplore()
-                      }}
-                      disabled={!publishedAt || (systemFeatures.webapp_auth.enabled && !userCanAccessApp?.result)}
-                      icon={<RiPlanetLine className='h-4 w-4' />}
-                    >
-                      {t('workflow.common.openInExplore')}
-                    </SuggestedAction>
-                  </Tooltip>
-                  <SuggestedAction
-                    disabled={!publishedAt}
-                    link='./develop'
-                    icon={<RiTerminalBoxLine className='h-4 w-4' />}
-                  >
-                    {t('workflow.common.accessAPIReference')}
-                  </SuggestedAction>
-                  {appDetail?.mode === 'workflow' && (
-                    <WorkflowToolConfigureButton
                       disabled={!publishedAt}
-                      published={!!toolPublished}
-                      detailNeedUpdate={!!toolPublished && published}
-                      workflowAppId={appDetail?.id}
-                      icon={{
-                        content: (appDetail.icon_type === 'image' ? '🤖' : appDetail?.icon) || '🤖',
-                        background: (appDetail.icon_type === 'image' ? appDefaultIconBackground : appDetail?.icon_background) || appDefaultIconBackground,
-                      }}
-                      name={appDetail?.name}
-                      description={appDetail?.description}
-                      inputs={inputs}
-                      handlePublish={handlePublish}
-                      onRefreshData={onRefreshData}
-                    />
-                  )}
-                </div>
+                      link='./develop'
+                      icon={<RiTerminalBoxLine className='h-4 w-4' />}
+                    >
+                      {t('workflow.common.accessAPIReference')}
+                    </SuggestedAction>
+                    {appDetail?.mode === 'workflow' && (
+                      <WorkflowToolConfigureButton
+                        disabled={!publishedAt}
+                        published={!!toolPublished}
+                        detailNeedUpdate={!!toolPublished && published}
+                        workflowAppId={appDetail?.id}
+                        icon={{
+                          content: (appDetail.icon_type === 'image' ? '🤖' : appDetail?.icon) || '🤖',
+                          background: (appDetail.icon_type === 'image' ? appDefaultIconBackground : appDetail?.icon_background) || appDefaultIconBackground,
+                        }}
+                        name={appDetail?.name}
+                        description={appDetail?.description}
+                        inputs={inputs}
+                        handlePublish={handlePublish}
+                        onRefreshData={onRefreshData}
+                      />
+                    )}
+                  </div>
+                )}
               </>}
           </div>
         </PortalToFollowElemContent>

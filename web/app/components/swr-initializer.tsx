@@ -10,6 +10,7 @@ import {
   EDUCATION_VERIFY_URL_SEARCHPARAMS_ACTION,
 } from '@/app/education-apply/constants'
 import { resolvePostLoginRedirect } from '../signin/utils/post-login-redirect'
+import { setAccessTypeInStorage } from '@/utils/access-type'
 
 type SwrInitializerProps = {
   children: ReactNode
@@ -64,6 +65,8 @@ const SwrInitializer = ({
         if (searchParams.has('access_token') || searchParams.has('refresh_token')) {
           consoleToken && localStorage.setItem('console_token', consoleToken)
           refreshToken && localStorage.setItem('refresh_token', refreshToken)
+          // 设置访问类型为token_url_access
+          setAccessTypeInStorage('token_url_access')
           const redirectUrl = resolvePostLoginRedirect(searchParams)
           if (redirectUrl)
             location.replace(redirectUrl)
