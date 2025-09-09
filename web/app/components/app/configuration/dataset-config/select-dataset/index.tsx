@@ -13,6 +13,7 @@ import Loading from '@/app/components/base/loading'
 import Badge from '@/app/components/base/badge'
 import { useKnowledge } from '@/hooks/use-knowledge'
 import cn from '@/utils/classnames'
+import { useAccessType } from '@/hooks/use-access-type'
 
 export type ISelectDataSetProps = {
   isShow: boolean
@@ -28,12 +29,16 @@ const SelectDataSet: FC<ISelectDataSetProps> = ({
   onSelect,
 }) => {
   const { t } = useTranslation()
+  const { isTokenUrlAccess } = useAccessType()
   const [selected, setSelected] = React.useState<DataSet[]>([])
   const [loaded, setLoaded] = React.useState(false)
   const [datasets, setDataSets] = React.useState<DataSet[] | null>(null)
   const [hasInitialized, setHasInitialized] = React.useState(false)
   const hasNoData = !datasets || datasets?.length === 0
   const canSelectMulti = true
+
+  // 如果是通过token访问且知识库为空，则不允许添加
+  const shouldHideAddButton = isTokenUrlAccess && hasNoData
 
   const listRef = useRef<HTMLDivElement>(null)
   const [page, setPage, getPage] = useGetState(1)
@@ -109,7 +114,10 @@ const SelectDataSet: FC<ISelectDataSetProps> = ({
           }}
         >
           <span className='text-text-tertiary'>{t('appDebug.feature.dataSet.noDataSet')}</span>
-          <Link href='/datasets/create' className='font-normal text-text-accent'>{t('appDebug.feature.dataSet.toCreate')}</Link>
+          {/* 如果是通过token访问，不显示创建链接 */}
+          {!isTokenUrlAccess && (
+            <Link href='/datasets/create' className='font-normal text-text-accent'>{t('appDebug.feature.dataSet.toCreate')}</Link>
+          )}
         </div>
       )}
 
@@ -164,7 +172,10 @@ const SelectDataSet: FC<ISelectDataSetProps> = ({
           </div>
           <div className='flex space-x-2'>
             <Button onClick={onClose}>{t('common.operation.cancel')}</Button>
-            <Button variant='primary' onClick={handleSelect} disabled={hasNoData}>{t('common.operation.add')}</Button>
+            {/* 如果是通过token访问且知识库为空，隐藏添加按钮 */}
+            {!shouldHideAddButton && (
+              <Button variant='primary' onClick={handleSelect} disabled={hasNoData}>{t('common.operation.add')}</Button>
+            )}
           </div>
         </div>
       )}

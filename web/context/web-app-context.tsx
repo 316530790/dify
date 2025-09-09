@@ -12,6 +12,7 @@ import { useEffect } from 'react'
 import { useState } from 'react'
 import { create } from 'zustand'
 import { useGlobalPublicStore } from './global-public-context'
+import { getAccessTypeFromStorage, setAccessTypeInStorage } from '@/utils/access-type'
 
 type WebAppStore = {
   shareCode: string | null
@@ -26,6 +27,9 @@ type WebAppStore = {
   updateWebAppMeta: (appMeta: AppMeta | null) => void
   userCanAccessApp: boolean
   updateUserCanAccessApp: (canAccess: boolean) => void
+  // 新增：记录访问类型
+  accessType: 'normal_login' | 'token_url_access' | null
+  updateAccessType: (accessType: 'normal_login' | 'token_url_access' | null) => void
 }
 
 export const useWebAppStore = create<WebAppStore>(set => ({
@@ -41,6 +45,9 @@ export const useWebAppStore = create<WebAppStore>(set => ({
   updateWebAppMeta: (appMeta: AppMeta | null) => set(() => ({ appMeta })),
   userCanAccessApp: false,
   updateUserCanAccessApp: (canAccess: boolean) => set(() => ({ userCanAccessApp: canAccess })),
+  // 新增：记录访问类型
+  accessType: null,
+  updateAccessType: (accessType: 'normal_login' | 'token_url_access' | null) => set(() => ({ accessType })),
 }))
 
 const getShareCodeFromRedirectUrl = (redirectUrl: string | null): string | null => {
@@ -60,6 +67,7 @@ const WebAppStoreProvider: FC<PropsWithChildren> = ({ children }) => {
   const isGlobalPending = useGlobalPublicStore(s => s.isGlobalPending)
   const updateWebAppAccessMode = useWebAppStore(state => state.updateWebAppAccessMode)
   const updateShareCode = useWebAppStore(state => state.updateShareCode)
+  const updateAccessType = useWebAppStore(state => state.updateAccessType)
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const redirectUrlParam = searchParams.get('redirect_url')
@@ -87,6 +95,30 @@ const WebAppStoreProvider: FC<PropsWithChildren> = ({ children }) => {
       }
     }
   }, [accessModeResult, updateWebAppAccessMode, shareCode])
+
+   // 根据URL参数设置访问类型
+  useEffect(() => {
+    // 检查URL中是否有access_token或refresh_token参数
+    const hasTokenParams = searchParams.has('access_token') || searchParams.has('refresh_token')
+
+    if (hasTokenParams) {
+      // 如果有token参数，设置为token_url_access并保存到localStorage
+      updateAccessType('token_url_access')
+      setAccessTypeInStorage('token_url_access')
+    }
+    else {
+      // 如果没有token参数，尝试从localStorage读取访问类型
+      const storedAccessType = getAccessTypeFromStorage()
+      if (storedAccessType) {
+        updateAccessType(storedAccessType)
+      }
+      else {
+        // 如果localStorage中也没有，设置为正常登录并保存到localStorage
+        updateAccessType('normal_login')
+        setAccessTypeInStorage('normal_login')
+      }
+    }
+  }, [searchParams, updateAccessType])
 
   if (isGlobalPending || isFetching || isFetchingAccessToken) {
     return <div className='flex h-full w-full items-center justify-center'>

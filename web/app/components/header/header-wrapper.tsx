@@ -4,6 +4,9 @@ import { usePathname } from 'next/navigation'
 import s from './index.module.css'
 import { useEventEmitterContextContext } from '@/context/event-emitter'
 import classNames from '@/utils/classnames'
+/** SELF-新增访问类型管理 **/
+import { useAccessType } from '@/hooks/use-access-type'
+/** SELF-新增访问类型管理 **/
 
 type HeaderWrapperProps = {
   children: React.ReactNode
@@ -24,6 +27,14 @@ const HeaderWrapper = ({
     if (v?.type === 'workflow-canvas-maximize')
       setHideHeader(v.payload)
   })
+
+  /** SELF-新增访问类型管理 **/
+  const { isTokenUrlAccess } = useAccessType()
+   // 如果是通过token访问，隐藏头部
+  if (isTokenUrlAccess)
+    return null
+
+  /** SELF-新增访问类型管理 **/
 
   return (
     <div className={classNames(
