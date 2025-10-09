@@ -188,20 +188,23 @@ export const useEmbeddedChatbot = () => {
         }
       }
       if (item.number) {
-        const convertedNumber = Number(initInputs[item.number.variable]) ?? undefined
+        const convertedNumber = Number(initInputs[item.number.variable])
         return {
           ...item.number,
           default: convertedNumber || item.default || item.number.default,
           type: 'number',
         }
       }
+
       if (item.checkbox) {
+        const preset = initInputs[item.checkbox.variable] === true
         return {
           ...item.checkbox,
-          default: false,
+          default: preset || item.default || item.checkbox.default,
           type: 'checkbox',
         }
       }
+
       if (item.select) {
         const isInputInOptions = item.select.options.includes(initInputs[item.select.variable])
         return {

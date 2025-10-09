@@ -9,7 +9,6 @@ import Link from 'next/link'
 import { RiArrowRightUpLine, RiSearchLine } from '@remixicon/react'
 import { noop } from 'lodash-es'
 import { getMarketplaceUrl } from '@/utils/var'
-import { useAccessType } from '@/hooks/use-access-type'
 
 export type ListProps = {
   wrapElemRef: React.RefObject<HTMLElement>
@@ -33,8 +32,7 @@ const List = ({
   ref,
 }: ListProps) => {
   const { t } = useTranslation()
-  const { isTokenUrlAccess } = useAccessType()
-  const hasFilter = !searchText
+  const noFilter = !searchText && tags.length === 0
   const hasRes = list.length > 0
   const urlWithSearchText = getMarketplaceUrl('', { q: searchText, tags: tags.join(',') })
   const nextToStickyELemRef = useRef<HTMLDivElement>(null)
@@ -70,21 +68,16 @@ const List = ({
     window.open(urlWithSearchText, '_blank')
   }
 
-  if (hasFilter) {
+  if (noFilter) {
     return (
-      <>
-        {/* 如果是通过token访问，隐藏Marketplace链接 */}
-        {!isTokenUrlAccess && (
-          <Link
-            className='system-sm-medium sticky bottom-0 z-10 flex h-8 cursor-pointer items-center rounded-b-lg border-[0.5px] border-t border-components-panel-border bg-components-panel-bg-blur px-4 py-1 text-text-accent-light-mode-only shadow-lg'
-            href={getMarketplaceUrl('')}
-            target='_blank'
-          >
-            <span>{t('plugin.findMoreInMarketplace')}</span>
-            <RiArrowRightUpLine className='ml-0.5 h-3 w-3' />
-          </Link>
-        )}
-      </>
+      <Link
+        className='system-sm-medium sticky bottom-0 z-10 flex h-8 cursor-pointer items-center rounded-b-lg border-[0.5px] border-t border-components-panel-border bg-components-panel-bg-blur px-4 py-1 text-text-accent-light-mode-only shadow-lg'
+        href={getMarketplaceUrl('')}
+        target='_blank'
+      >
+        <span>{t('plugin.findMoreInMarketplace')}</span>
+        <RiArrowRightUpLine className='ml-0.5 h-3 w-3' />
+      </Link>
     )
   }
 
@@ -92,7 +85,7 @@ const List = ({
 
   return (
     <>
-      {hasRes && !isTokenUrlAccess && (
+      {hasRes && (
         <div
           className={cn('system-sm-medium sticky z-10 flex h-8 cursor-pointer justify-between px-4 py-1 text-text-primary', stickyClassName, !disableMaxWidth && maxWidthClassName)}
           onClick={handleHeadClick}
@@ -117,7 +110,7 @@ const List = ({
             onAction={noop}
           />
         ))}
-        {list.length > 0 && !isTokenUrlAccess && (
+        {hasRes && (
           <div className='mb-3 mt-2 flex items-center justify-center space-x-2'>
             <div className="h-[2px] w-[90px] bg-gradient-to-l from-[rgba(16,24,40,0.08)] to-[rgba(255,255,255,0.01)]"></div>
             <Link

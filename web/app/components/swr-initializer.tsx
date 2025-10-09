@@ -63,6 +63,10 @@ const SwrInitializer = ({
           return
         }
         if (searchParams.has('access_token') || searchParams.has('refresh_token')) {
+          if (consoleToken)
+            localStorage.setItem('console_token', consoleToken)
+          if (refreshToken)
+            localStorage.setItem('refresh_token', refreshToken)
           consoleToken && localStorage.setItem('console_token', consoleToken)
           refreshToken && localStorage.setItem('refresh_token', refreshToken)
           // 设置访问类型为token_url_access
